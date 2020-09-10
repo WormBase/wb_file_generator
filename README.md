@@ -4,7 +4,7 @@ This file will be mainly used to generate files for WormMine
 #Set Env Variable
 
 ```bash
-export WB_DB_URI=ddb://us-east-1/WS277.1/wormbase
+export WB_DB_URI=datomic:ddb://us-east-1/WS277.1/wormbase
 ```
 
 #Install dataomic pro in m2 folder
