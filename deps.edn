@@ -9,4 +9,8 @@
                                               org.slf4j/slf4j-log4j12]}
         com.amazonaws/aws-java-sdk-dynamodb {:mvn/version "1.11.82"}}
  :aliases
- {:run {:main-opts ["-m" "wb-file-generator.core"]}}}
+ {
+        :perf {:jvm-opts ["-server"
+                          "-Xmx33G"
+                          "-Xms32G"]}
+	:run {:main-opts ["-m" "wb-file-generator.core"]}}}
