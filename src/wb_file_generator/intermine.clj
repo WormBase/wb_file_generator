@@ -862,7 +862,7 @@
   (println options)
   (if (.isDirectory (io/file (:dir options)))
    (do
-;    (generate-variantions-file options db) ;requires lots of memory
+;    (generate-variations-file options db) ;requires lots of memory
 ;    (generate-cds-file options db) ;requires lots of memeory
     (generate-gene-file options db)
     (generate-anatomy-term-file options db)
