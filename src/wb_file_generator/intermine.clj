@@ -5,6 +5,11 @@
    [datomic.api :as d]
    [clojure.java.io :as io]))
 
+(def q-gene
+  '[:find  [?gene ...]
+    :in $
+    :where [?gene :gene/id]])
+
 (def q-anatomy-term
   '[:find  [?at ...]
     :in $
@@ -44,11 +49,6 @@
   '[:find  [?ls ...]
     :in $
     :where [?ls :phenotype/id]])
-
-(def q-gene
-  '[:find  [?gene ...]
-    :in $
-    :where [?gene :gene/id]])
 
 (def q-gene-class
   '[:find  [?gc ...]
@@ -95,6 +95,70 @@
                         javax.xml.transform.OutputKeys/METHOD "xml")
     (.transform transformer in out)
     (-> out .getWriter .toString)))
+
+
+(defn generate-gene-file [options db]
+ (do
+   (println "Generating Gene file")
+   (let [filepath (str (:dir options) "/gene.xml")
+         p (println (str "Filepath: " filepath))]
+    (with-open [out-file (java.io.OutputStreamWriter.
+                         (java.io.FileOutputStream. filepath) "UTF-8")]
+      (let [data
+            (some->> (d/q q-gene db)
+	             (map (fn [id]
+			   (let [obj (d/entity db id)]
+                            [:gene
+                             {:primaryIdentifier (:gene/id obj)}
+                             [:secondaryIdentifier {} (:gene/sequence-name obj)]
+                             [:symbol {} (:gene/public-name obj)]
+                             [:name {} (:gene/public-name obj)]
+                             [:operons {} (some->> (:operon.contains-gene/_gene obj)
+                                                   (map :operon/_contains-gene)
+                                                   (map :operon/id)
+                                                   (map (fn [id]
+                                                         [:operon {:primaryIdentifier id}])))]
+                             [:biotype {} (when-let [id (->> obj :gene/biotype :so-term/id)]
+                                           [:so-term {:primaryIdentifier id}])]
+                             [:lastUpdated {} (->> obj ; this is never populated as far as I can tell
+                                                   :gene/evidence
+                                                   :evidence/date-last-updated)]
+                             [:briefDescription {} (some->> (:gene/concise-description obj)
+                                                            (map :gene.concise-description/text)
+                                                            (first))]
+                             [:descriptions {} (some->> (:gene/automated-description obj) ;e.g. WBGene00105325
+                                                        (map :gene.automated-description/text)
+                                                        (map (fn [txt]
+                                                              [:description {} txt])))]
+                             [:organism_name {} (->> obj
+                                                     :gene/species
+                                                     :species/id)]
+                             [:transcripts {} (some->> (:gene/corresponding-transcript obj)
+                                                       (map :gene.corresponding-transcript/transcript)
+                                                       (map :transcript/id)
+                                                       (map (fn [id]
+                                                             [:transcript {:primaryIdentifier id}])))]
+                             [:variations {} (some->> (:gene/reference-allele obj) ;e.g. WBGene00002363
+                                                       (map :gene.reference-allele/variation)
+                                                       (map :variation/id)
+                                                       (map (fn [id]
+                                                             [:variation {:primaryIdentifier id}])))]
+                             [:CDSs {} (some->> (:gene/corresponding-cds obj)
+                                                (map :gene.corresponding-cds/cds)
+                                                (map :cds/id)
+                                                (map (fn [id]
+                                                      [:cds {:primaryIdentifier id}])))]
+                             [:strains {} (some->> (:gene/strain obj)
+                                                   (map :strain/id)
+                                                   (map (fn [id]
+                                                         [:strain {:primaryIdentifier id}])))]])))
+		     (seq))
+               
+             xml-data
+             (xml/sexp-as-element [:genes data])]
+         (.write out-file (ppxml (xml/emit-str xml-data))))))))
+
+
 
 
 (defn generate-anatomy-term-file [options db]
@@ -277,67 +341,6 @@
 
              xml-data
             (xml/sexp-as-element [:rnais data])]
-         (.write out-file (ppxml (xml/emit-str xml-data))))))))
-
-(defn generate-gene-file [options db]
- (do
-   (println "Generating Gene file")
-   (let [filepath (str (:dir options) "/gene.xml")
-         p (println (str "Filepath: " filepath))]
-    (with-open [out-file (java.io.OutputStreamWriter.
-                         (java.io.FileOutputStream. filepath) "UTF-8")]
-      (let [data
-            (some->> (d/q q-gene db)
-	             (map (fn [id]
-			   (let [obj (d/entity db id)]
-                            [:gene
-                             {:primaryIdentifier (:gene/id obj)}
-                             [:secondaryIdentifier {} (:gene/sequence-name obj)]
-                             [:symbol {} (:gene/public-name obj)]
-                             [:name {} (:gene/public-name obj)]
-                             [:operons {} (some->> (:operon.contains-gene/_gene obj)
-                                                   (map :operon/_contains-gene)
-                                                   (map :operon/id)
-                                                   (map (fn [id]
-                                                         [:operon {:primaryIdentifier id}])))]
-                             [:biotype {} (when-let [id (->> obj :gene/biotype :so-term/id)]
-                                           [:so-term {:primaryIdentifier id}])]
-                             [:lastUpdated {} (->> obj ; this is never populated as far as I can tell
-                                                   :gene/evidence
-                                                   :evidence/date-last-updated)]
-                             [:briefDescription {} (some->> (:gene/concise-description obj)
-                                                            (map :gene.concise-description/text)
-                                                            (first))]
-                             [:descriptions {} (some->> (:gene/automated-description obj) ;e.g. WBGene00105325
-                                                        (map :gene.automated-description/text)
-                                                        (map (fn [txt]
-                                                              [:description {} txt])))]
-                             [:organism_name {} (->> obj
-                                                     :gene/species
-                                                     :species/id)]
-                             [:transcripts {} (some->> (:gene/corresponding-transcript obj)
-                                                       (map :gene.corresponding-transcript/transcript)
-                                                       (map :transcript/id)
-                                                       (map (fn [id]
-                                                             [:transcript {:primaryIdentifier id}])))]
-                             [:variations {} (some->> (:gene/reference-allele obj) ;e.g. WBGene00002363
-                                                       (map :gene.reference-allele/variation)
-                                                       (map :variation/id)
-                                                       (map (fn [id]
-                                                             [:variation {:primaryIdentifier id}])))]
-                             [:CDSs {} (some->> (:gene/corresponding-cds obj)
-                                                (map :gene.corresponding-cds/cds)
-                                                (map :cds/id)
-                                                (map (fn [id]
-                                                      [:cds {:primaryIdentifier id}])))]
-                             [:strains {} (some->> (:gene/strain obj)
-                                                   (map :strain/id)
-                                                   (map (fn [id]
-                                                         [:strain {:primaryIdentifier id}])))]])))
-		     (seq))
-               
-             xml-data
-             (xml/sexp-as-element [:genes data])]
          (.write out-file (ppxml (xml/emit-str xml-data))))))))
 
 
@@ -859,13 +862,14 @@
   (println options)
   (if (.isDirectory (io/file (:dir options)))
    (do
+;    (generate-variations-file options db) ;requires lots of memory
+;    (generate-cds-file options db) ;requires lots of memeory
+    (generate-gene-file options db)
     (generate-anatomy-term-file options db)
     (generate-transcript-file options db)
     (generate-strain-file options db)
     (generate-rnai-file options db)
-    (generate-gene-file options db)
     (generate-gene-class-file options db)
-    (generate-cds-file options db) ;requires lots of memeory
     (generate-expression-cluster-file options db)
     (generate-expression-pattern-file options db)
     (generate-laboratory-file options db)
@@ -875,6 +879,5 @@
     (generate-species-file options db)
     (generate-strain-file options db)
     (generate-transcript-file options db)
-    (generate-variantions-file options db) ;requires lots of memory
       )
    (println (str "provided folder is not valid: " (:dir options))))))
