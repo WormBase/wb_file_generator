@@ -813,7 +813,7 @@
          (.write out-file (ppxml (xml/emit-str xml-data))))))))
 
 
-(defn generate-variantions-file [options db]
+(defn generate-variations-file [options db]
  (do
    (println "Generating Variations file")
    (let [filepath (str (:dir options) "/variations.xml")
