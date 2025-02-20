@@ -1,12 +1,26 @@
 {:paths ["src"]
- :deps {org.clojure/clojure {:mvn/version "1.9.0"}
-        org.clojure/tools.cli {:mvn/version "1.0.194"}
-        org.clojure/data.xml {:mvn/version "0.0.8"}
-        environ {:mvn/version "1.2.0"}
-        mount {:mvn/version "0.1.11"}
-        com.datomic/datomic-pro {:mvn/version "0.9.5703"
-                                 :exclusions [org.slf4j/slf4j-nop
-                                              org.slf4j/slf4j-log4j12]}
-        com.amazonaws/aws-java-sdk-dynamodb {:mvn/version "1.11.82"}}
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        org.clojure/tools.cli {:mvn/version "1.0.219"}
+        org.clojure/data.xml {:mvn/version "0.2.0-alpha8"}
+        environ/environ {:mvn/version "1.2.0"}
+        mount/mount {:mvn/version "0.1.17"}
+        com.datomic/peer {:mvn/version "1.0.7277"
+                         :exclusions [org.slf4j/slf4j-nop
+                                    org.slf4j/slf4j-log4j12]}
+        com.amazonaws/aws-java-sdk-dynamodb {:mvn/version "1.12.472"}}
+
  :aliases
- {:run {:main-opts ["-m" "wb-file-generator.core"]}}}
+ {:run {:main-opts ["-m" "wb-file-generator.core"]}
+
+  :dev {:extra-deps {criterium/criterium {:mvn/version "0.4.6"}
+                     com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.0.5"}}
+        :jvm-opts ["-Djdk.attach.allowAttachSelf=true"
+                  "-XX:+UnlockDiagnosticVMOptions"
+                  "-XX:+DebugNonSafepoints"]}
+
+  :test {:extra-paths ["test"]
+         :extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}
+                     io.github.cognitect-labs/test-runner {:git/tag "v0.5.1" :git/sha "dfb30dd"}}}
+
+  :build {:deps {io.github.clojure/tools.build {:git/tag "v0.9.6" :git/sha "8e78bcc"}}
+          :ns-default build}}}

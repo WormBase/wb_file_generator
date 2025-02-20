@@ -30,8 +30,7 @@
   [["-v" nil "Verbosity level"
     :id :verbosity
     :default 0
-    :update-fn inc] ; Prior to 0.4.1, you would have to use:
-                   ;; :assoc-fn (fn [m k _] (update-in m [k] inc))
+    :update-fn inc]
    ;; A boolean option defaulting to nil
    [nil "--dir DIR" "Output Directory"
     :id :dir
@@ -39,37 +38,34 @@
    ["-h" "--help"]])
 
 (defn exit [status msg]
- (println msg)
- (System/exit status))
+  (println msg)
+  (System/exit status))
 
 (defn validate-args [args]
- (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
-  (cond
-   (:help options) ; help => exit OK with usage summary
-   {:exit-message (usage summary) :ok? true}
+  (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
+    (cond
+      (:help options) ; help => exit OK with usage summary
+      {:exit-message (usage summary) :ok? true}
 
-   errors ; errors => exit with description of errors
-   {:exit-message (error-msg errors)}
+      errors ; errors => exit with description of errors
+      {:exit-message (error-msg errors)}
 
-   (and (= 1 (count arguments))
+      (and (= 1 (count arguments))
            (#{"intermine"} (first arguments)))
       {:action (first arguments) :options options}
 
-   :else ; failed custom validation => exit with usage summary
-   {:exit-message (usage summary)})))
-
-;(defn datomic-uri []
-; (environ/env :wb-db-uri))
+      :else ; failed custom validation => exit with usage summary
+      {:exit-message (usage summary)})))
 
 (defn -main [& args]
- (let [output-filepath "output"]
-  (let [{:keys [action options exit-message ok?]} (validate-args args)]
-   (if exit-message
-    (exit (if ok? 0 1) exit-message)
-    (let [db (do (mount/start)
-                 (d/db datomic-conn))]
-     (do
-      (case action
-       "intermine" (intermine/generate-files options db))
-      (mount/stop)
-      (java.lang.System/exit 0)))))))
+  (let [output-filepath "output"]
+    (let [{:keys [action options exit-message ok?]} (validate-args args)]
+      (if exit-message
+        (exit (if ok? 0 1) exit-message)
+        (let [db (do (mount/start)
+                     (d/db datomic-conn))]
+          (do
+            (case action
+              "intermine" (intermine/generate-files options db))
+            (mount/stop)
+            (System/exit 0)))))))

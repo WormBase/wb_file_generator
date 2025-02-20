@@ -528,24 +528,72 @@
          (.write out-file (ppxml (xml/emit-str xml-data))))))))
 
 
+; (defn generate-laboratory-file [options db]
+;  (do
+;    (println "Generating Laboratory file")
+;    (let [filepath (str (:dir options) "/laboratory.xml")
+;          p (println (str "Filepath: " filepath))]
+;     (with-open [out-file (java.io.OutputStreamWriter.
+;                          (java.io.FileOutputStream. filepath) "UTF-8")]
+;       (let [data
+;             (some->> (d/q q-laboratory db)
+; 	             (map (fn [id]
+; 			   (let [obj (d/entity db id)]
+;                             [:laboratory
+;                              {:primaryIdentifier (:laboratory/id obj)}])))
+; 	             (seq))
+               
+;              xml-data
+;              (xml/sexp-as-element [:laboratories data])]
+;          (.write out-file (ppxml (xml/emit-str xml-data))))))))
+
+
 (defn generate-laboratory-file [options db]
  (do
    (println "Generating Laboratory file")
-   (let [filepath (str (:dir options) "/laboratory.xml")
-         p (println (str "Filepath: " filepath))]
-    (with-open [out-file (java.io.OutputStreamWriter.
+   (def labs (d/q q-laboratory db))
+   (def splits (vec (partition-all 100 labs)))
+   (doseq [n splits]
+   	(let [filepath (str (:dir options) "/laboratory.xml")
+   			p (println (str "Filepath: " filepath))]
+					(with-open [out-file (java.io.OutputStreamWriter.
                          (java.io.FileOutputStream. filepath) "UTF-8")]
-      (let [data
-            (some->> (d/q q-laboratory db)
-	             (map (fn [id]
-			   (let [obj (d/entity db id)]
-                            [:laboratory
-                             {:primaryIdentifier (:laboratory/id obj)}])))
-	             (seq))
+
+
+					)
+   	)
+			)
+   ; (println splits)
+   ; (doseq [n [splits]]
+   ; 	println(n)
+   ; )
+
+   ; (let [filepath (str (:dir options) "/laboratory.xml")
+
+
+
+
+
+   ; (let [filepath (str (:dir options) "/laboratory.xml")
+   ;       p (println (str "Filepath: " filepath))]
+   ;  (with-open [out-file (java.io.OutputStreamWriter.
+   ;                       (java.io.FileOutputStream. filepath) "UTF-8")]
+   ;    (let [data
+   ;          (some->> (d/q q-laboratory db)
+	  ;            (map (fn [id]
+			;    (let [obj (d/entity db id)]
+   ;                          [:laboratory
+   ;                           {:primaryIdentifier (:laboratory/id obj)}])))
+	  ;            (seq))
                
-             xml-data
-             (xml/sexp-as-element [:laboratories data])]
-         (.write out-file (ppxml (xml/emit-str xml-data))))))))
+   ;           xml-data
+   ;           (xml/sexp-as-element [:laboratories data])]
+   ;       (.write out-file (ppxml (xml/emit-str xml-data))))))))
+   ))
+
+
+
+
 
 
 (defn generate-life-stage-file [options db]
@@ -859,22 +907,22 @@
   (println options)
   (if (.isDirectory (io/file (:dir options)))
    (do
-    (generate-anatomy-term-file options db)
-    (generate-transcript-file options db)
-    (generate-strain-file options db)
-    (generate-rnai-file options db)
-    (generate-gene-file options db)
-    (generate-gene-class-file options db)
+    ; (generate-anatomy-term-file options db)
+    ; (generate-transcript-file options db)
+    ; (generate-strain-file options db)
+    ; (generate-rnai-file options db)
+    ; (generate-gene-file options db)
+    ; (generate-gene-class-file options db)
     (generate-cds-file options db) ;requires lots of memeory
-    (generate-expression-cluster-file options db)
-    (generate-expression-pattern-file options db)
-    (generate-laboratory-file options db)
-    (generate-life-stage-file options db)
-    (generate-phenotype-file options db)
-    (generate-protein-file options db)
-    (generate-species-file options db)
-    (generate-strain-file options db)
-    (generate-transcript-file options db)
-    (generate-variantions-file options db) ;requires lots of memory
+    ; (generate-expression-cluster-file options db)
+    ; (generate-expression-pattern-file options db)
+    ; (generate-laboratory-file options db)
+    ; (generate-life-stage-file options db)
+    ; (generate-phenotype-file options db)
+    ; (generate-protein-file options db)
+    ; (generate-species-file options db)
+    ; (generate-strain-file options db)
+    ; (generate-transcript-file options db)
+    ; (generate-variantions-file options db) ;requires lots of memory
       )
    (println (str "provided folder is not valid: " (:dir options))))))
